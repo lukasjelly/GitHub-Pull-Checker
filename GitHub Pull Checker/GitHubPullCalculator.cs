@@ -1,7 +1,7 @@
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using Newtonsoft.Json;
 
 namespace GitHub_Pull_Calculator
 {
@@ -20,7 +20,7 @@ namespace GitHub_Pull_Calculator
             string repoName = Console.ReadLine();
 
             //using ensures HttpClient class is killed at the end of this block to avoid memory leak
-            using (var client = new HttpClient()) 
+            using (var client = new HttpClient())
             {
                 //GitHub requires valid user agent otherwise 403 error is returned
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; AcmeInc/1.0)");
@@ -28,10 +28,15 @@ namespace GitHub_Pull_Calculator
                 do
                 {
                     Console.WriteLine($"Getting page {page} results");
+
+                    //pulls?state=open ensures only open pull requests are returned
+                    //per_page sets number of results per page
+                    //page increments while pagePRCount is the same as itemsPerPage 
                     string uri = $"https://api.github.com/repos/{repoOwner}/{repoName}/pulls?state=open&per_page={itemsPerPage}&page={page}";
+
                     var response = client.GetAsync(uri).Result;
 
-                    if (response.IsSuccessStatusCode) //ensures response is always successful
+                    if (response.IsSuccessStatusCode) //ensures response is always successful, else error
                     {
                         var responseContent = response.Content;
 
@@ -51,11 +56,12 @@ namespace GitHub_Pull_Calculator
                         Console.WriteLine(response);
                         break;
                     }
-                    page++;
-                    
+                    page++; //get next page
+
                 } while (pagePRCount == itemsPerPage);
             }
-            Console.WriteLine($"There are {prCount} pull requests");
+            Console.WriteLine($"There are {prCount} pull requests for {repoOwner}/{repoName}");
+            Console.WriteLine("Press enter key to exit!");
             Console.ReadLine();
         }
 
