@@ -14,6 +14,8 @@ namespace GitHub_Pull_Calculator
             int page = 1;
             int pagePRCount = 0;
 
+            Console.WriteLine("Welcome to Lukas' CLI!\nHere is a floppy disk for some nostalgia :-)");
+            Console.WriteLine(" ______\n| |__| |\n|  ()  |\n|______|\n ");
             Console.WriteLine("Enter repo owner:");
             string repoOwner = Console.ReadLine();
             Console.WriteLine("Enter repo name:");
@@ -31,20 +33,22 @@ namespace GitHub_Pull_Calculator
 
                     //pulls?state=open ensures only open pull requests are returned
                     //per_page sets number of results per page
-                    //page increments while pagePRCount is the same as itemsPerPage 
                     string uri = $"https://api.github.com/repos/{repoOwner}/{repoName}/pulls?state=open&per_page={itemsPerPage}&page={page}";
 
+                    //.result ensures call is processed synchronously 
                     var response = client.GetAsync(uri).Result;
 
-                    if (response.IsSuccessStatusCode) //ensures response is always successful, else error
+                    //ensures response is proccessed only when successful, else error has occurred
+                    if (response.IsSuccessStatusCode) 
                     {
                         var responseContent = response.Content;
 
                         string responseBody = responseContent.ReadAsStringAsync().Result;
 
-                        var printObj = JsonConvert.DeserializeObject<List<GitHubPR>>(responseBody);
+                        //temp storage of deserialized response to count number of PR's in current response page
+                        List<GitHubPR> prResultList = JsonConvert.DeserializeObject<List<GitHubPR>>(responseBody);
 
-                        pagePRCount = printObj.Count;
+                        pagePRCount = prResultList.Count;
 
                         prCount += pagePRCount;
 
@@ -56,15 +60,16 @@ namespace GitHub_Pull_Calculator
                         Console.WriteLine(response);
                         break;
                     }
-                    page++; //get next page
+                    page++; //move on to next page of results
 
-                } while (pagePRCount == itemsPerPage);
+                } while (pagePRCount == itemsPerPage); //page increments while pagePRCount is the same as itemsPerPage 
             }
-            Console.WriteLine($"There are {prCount} pull requests for {repoOwner}/{repoName}");
+            Console.WriteLine($"There are {prCount} open pull requests for {repoOwner}/{repoName}");
             Console.WriteLine("Press enter key to exit!");
             Console.ReadLine();
         }
 
+        //Class for deserializing API response stored as temp list
         public class GitHubPR
         {
             public int uri { get; set; }
