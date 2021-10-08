@@ -27,42 +27,51 @@ namespace GitHub_Pull_Calculator
                 //GitHub requires valid user agent otherwise 403 error is returned
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; AcmeInc/1.0)");
 
-                do
+                try
                 {
-                    Console.WriteLine($"Getting page {page} results");
-
-                    //pulls?state=open ensures only open pull requests are returned
-                    //per_page sets number of results per page
-                    string uri = $"https://api.github.com/repos/{repoOwner}/{repoName}/pulls?state=open&per_page={itemsPerPage}&page={page}";
-
-                    //.result ensures call is processed synchronously 
-                    var response = client.GetAsync(uri).Result;
-
-                    //ensures response is proccessed only when successful, else error has occurred
-                    if (response.IsSuccessStatusCode) 
+                    do
                     {
-                        var responseContent = response.Content;
+                        Console.WriteLine($"Getting page {page} results");
 
-                        string responseBody = responseContent.ReadAsStringAsync().Result;
+                        //pulls?state=open ensures only open pull requests are returned
+                        //per_page sets number of results per page
+                        string uri = $"https://api.github.com/repos/{repoOwner}/{repoName}/pulls?state=open&per_page={itemsPerPage}&page={page}";
 
-                        //temp storage of deserialized response to count number of PR's in current response page
-                        List<GitHubPR> prResultList = JsonConvert.DeserializeObject<List<GitHubPR>>(responseBody);
+                        //.result ensures call is processed synchronously 
+                        var response = client.GetAsync(uri).Result;
 
-                        pagePRCount = prResultList.Count;
+                        //ensures response is proccessed only when successful, else error has occurred
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var responseContent = response.Content;
 
-                        prCount += pagePRCount;
+                            string responseBody = responseContent.ReadAsStringAsync().Result;
 
-                        Console.WriteLine($"Number of results for this page: {pagePRCount}");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Error in getting data. Exiting...");
-                        Console.WriteLine(response);
-                        break;
-                    }
-                    page++; //move on to next page of results
+                            //temp storage of deserialized response to count number of PR's in current response page
+                            List<GitHubPR> prResultList = JsonConvert.DeserializeObject<List<GitHubPR>>(responseBody);
 
-                } while (pagePRCount == itemsPerPage); //page increments while pagePRCount is the same as itemsPerPage 
+                            pagePRCount = prResultList.Count;
+
+                            prCount += pagePRCount;
+
+                            Console.WriteLine($"Number of results for this page: {pagePRCount}");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Error in getting data. Exiting...");
+                            Console.WriteLine(response);
+                            break;
+                        }
+                        page++; //move on to next page of results
+
+                    } while (pagePRCount == itemsPerPage); //page increments while pagePRCount is the same as itemsPerPage 
+                }
+                catch
+                {
+                    Console.WriteLine("Whoops something went wrong there! Sorry about that.\nExiting...");
+                    Environment.Exit(0);
+                }
+                
             }
             Console.WriteLine($"There are {prCount} open pull requests for {repoOwner}/{repoName}");
             Console.WriteLine("Press enter key to exit!");
